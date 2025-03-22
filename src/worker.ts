@@ -1,3 +1,24 @@
+// Monkey patch for WebGPU API before importing web-llm
+if (navigator.gpu) {
+  const originalRequestAdapter = navigator.gpu.requestAdapter;
+  navigator.gpu.requestAdapter = async function(...args) {
+    const adapter = await originalRequestAdapter.apply(this, args);
+    if (adapter && !adapter.requestAdapterInfo) {
+      // Add missing requestAdapterInfo method
+      adapter.requestAdapterInfo = async function() {
+        return { 
+          vendor: "unknown", 
+          architecture: "unknown", 
+          device: "unknown", 
+          description: "Completed" 
+        };
+      };
+    }
+    return adapter;
+  };
+}
+
+
 // Serve the chat workload through web worker
 import {
   ChatWorkerHandler,
